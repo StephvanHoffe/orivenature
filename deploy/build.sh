@@ -3,6 +3,8 @@
 #
 #   deploy/build.sh               -> build/orive-webshop.zip (foto's worden bij de installatie opgehaald)
 #   deploy/build.sh --met-fotos   -> neemt ook public/uploads mee (groter bestand)
+#   deploy/build.sh --delen       -> maakt daarnaast delen van max. ±25 MB (orive-webshop-deel-1.zip, -2, …)
+#                                    die je allemaal in dezelfde map uitpakt
 #
 # Het pakket bevat twee mappen:
 #   orive/        de applicatie (komt NAAST public_html te staan)
@@ -13,9 +15,13 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/build"
 PKG="$OUT/pakket"
 WITH_PHOTOS=0
-[[ "${1:-}" == "--met-fotos" ]] && WITH_PHOTOS=1
+SPLIT=0
+for arg in "$@"; do
+  [[ "$arg" == "--met-fotos" ]] && WITH_PHOTOS=1
+  [[ "$arg" == "--delen" ]] && SPLIT=1
+done
 
-rm -rf "$PKG" "$OUT/orive-webshop.zip"
+rm -rf "$PKG" "$OUT"/orive-webshop*.zip
 mkdir -p "$PKG/orive" "$PKG/public_html"
 
 echo "→ Applicatie kopiëren"
@@ -94,4 +100,19 @@ cp "$ROOT/deploy/INSTALLATIE.md" "$PKG/INSTALLATIE.md"
 echo "→ Zip maken"
 (cd "$PKG" && zip -qr "$OUT/orive-webshop.zip" orive public_html INSTALLATIE.md)
 du -h "$OUT/orive-webshop.zip"
+
+if [[ $SPLIT == 1 ]]; then
+  echo "→ Delen maken"
+  PART=1
+  ZIP="$OUT/orive-webshop-deel-$PART.zip"
+  (cd "$PKG" && zip -qr "$ZIP" INSTALLATIE.md public_html orive -x 'orive/vendor/*')
+  for dir in "$PKG"/orive/vendor/*; do
+    if [[ $(stat -c %s "$ZIP") -gt 17000000 ]]; then
+      PART=$((PART + 1))
+      ZIP="$OUT/orive-webshop-deel-$PART.zip"
+    fi
+    (cd "$PKG" && zip -qr "$ZIP" "orive/vendor/$(basename "$dir")")
+  done
+  du -h "$OUT"/orive-webshop-deel-*.zip
+fi
 echo "Installatiecode (INSTALL_TOKEN): $TOKEN"

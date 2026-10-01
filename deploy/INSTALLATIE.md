@@ -30,6 +30,7 @@ Deze handleiding zet de nieuwe webshop op je Vimexx-hosting. Je hebt geen SSH of
 2. Open de map van je domein, bijvoorbeeld `domains/nieuw.orivenature.com/`.
 3. Staat er iets in `public_html` dat je wilt bewaren? Download dat dan eerst.
 4. Upload `orive-webshop.zip` naar deze map en kies **Uitpakken** (Extract).
+   Heb je het pakket in delen gekregen (`orive-webshop-deel-1.zip`, `-deel-2`, `-deel-3`)? Upload ze allemaal en pak ze **alle drie in dezelfde map** uit.
 5. De map ziet er daarna zo uit:
 
 ```
