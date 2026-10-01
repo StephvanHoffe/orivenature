@@ -88,7 +88,7 @@ class CustomerResource extends Resource
                 Group::make([
                     Section::make('Overzicht')->schema([
                         Text::make(fn (?Customer $record) => $record
-                            ? $record->orders()->whereNotNull('paid_at')->count().' bestellingen · '.money((int) $record->orders()->whereNotNull('paid_at')->sum('total')).' besteed'
+                            ? trans_choice(':count bestelling|:count bestellingen', $record->orders()->whereNotNull('paid_at')->count()).' · '.money((int) $record->orders()->whereNotNull('paid_at')->sum('total')).' besteed'
                             : 'Nieuwe klant'),
                         Text::make(fn (?Customer $record) => $record ? 'Spaarpunten: '.$record->points_balance.' · Tegoed: '.money($record->credit_balance) : '')
                             ->visible(fn (?Customer $record) => (bool) $record),
