@@ -328,31 +328,45 @@ input { font: inherit; }
 .trust-row svg { color: var(--olive); }
 
 .hero__visual { position: relative; width: 100%; max-width: 660px; margin-inline: auto; aspect-ratio: 1 / .95; }
-.hero__frame {
-  position: absolute; inset: 7% 5% 9% 7%;
-  overflow: hidden; background: var(--sage);
+.hero__blob {
+  position: absolute; inset: 14% 4% 6% 10%; background: var(--sage); opacity: .75;
   animation: morph 14s ease-in-out infinite;
-  box-shadow: var(--shadow-soft);
-  transform: translate3d(calc(var(--mx, 0) * -8px), calc(var(--my, 0) * -8px), 0);
-  transition: transform .6s var(--ease-out);
 }
-.hero__photo { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; transform: scale(1.06); }
+
+/* De hero-foto is een collage van twee foto's: elke vrouw krijgt haar eigen boogkaart */
+.hero__card {
+  position: absolute; z-index: 1; margin: 0; width: 46%; aspect-ratio: .68;
+  overflow: hidden; border: 6px solid var(--white); border-radius: 999px 999px 1.75rem 1.75rem;
+  background: var(--sage); box-shadow: var(--shadow-soft);
+  transform: translate3d(calc(var(--mx, 0) * var(--depth, 10) * 1px), calc(var(--my, 0) * var(--depth, 10) * 1px), 0);
+  transition: transform .7s var(--ease-out);
+  animation: sway 8s ease-in-out infinite;
+}
+.hero__card--a { --r: -4deg; left: 6%; top: 3%; }
+.hero__card--b { --r: 4deg; right: 4%; top: 18%; z-index: 2; animation-duration: 9s; animation-delay: -3s; }
+.hero__photo { width: 100%; height: 100%; object-fit: cover; }
+.hero__card--a .hero__photo { object-position: 6% 50%; }
+.hero__card--b .hero__photo { object-position: 100% 50%; }
+@keyframes sway {
+  0%, 100% { translate: 0 0; rotate: var(--r, 0deg); }
+  50% { translate: 0 -10px; rotate: calc(var(--r, 0deg) + 1.5deg); }
+}
 
 .floaty {
-  position: absolute; z-index: 2; pointer-events: none;
+  position: absolute; z-index: 3; pointer-events: none;
   transform: translate3d(calc(var(--mx, 0) * var(--depth, 20) * 1px), calc(var(--my, 0) * var(--depth, 20) * 1px), 0);
   transition: transform .7s var(--ease-out);
 }
 .floaty img { animation: bob 6s ease-in-out infinite; filter: drop-shadow(0 22px 22px color-mix(in srgb, var(--cocoa) 30%, transparent)); }
-.floaty--matcha { width: 27%; left: -3%; top: 2%; }
+.floaty--matcha { width: 24%; left: -5%; bottom: 8%; }
 .floaty--matcha img { --r: -12deg; animation-duration: 6.4s; }
-.floaty--ube { width: 25%; right: -4%; top: 34%; }
-.floaty--ube img { --r: 11deg; animation-duration: 5.6s; animation-delay: -2s; }
-.floaty--dragon { width: 23%; left: 14%; bottom: -3%; }
-.floaty--dragon img { --r: -5deg; animation-duration: 7.2s; animation-delay: -4s; }
+.floaty--ube { width: 20%; left: 42%; top: -4%; }
+.floaty--ube img { --r: 9deg; animation-duration: 5.6s; animation-delay: -2s; }
+.floaty--dragon { width: 21%; left: 40%; bottom: -5%; }
+.floaty--dragon img { --r: -6deg; animation-duration: 7.2s; animation-delay: -4s; }
 
 .spin-badge {
-  position: absolute; z-index: 3; right: 4%; top: -1%; width: clamp(104px, 23%, 150px); aspect-ratio: 1;
+  position: absolute; z-index: 4; right: 4%; top: -1%; width: clamp(104px, 23%, 150px); aspect-ratio: 1;
   display: grid; place-items: center; border-radius: 50%;
   background: var(--olive); color: var(--cream);
   box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--cocoa) 50%, transparent);
@@ -363,10 +377,10 @@ input { font: inherit; }
 .spin-badge text { fill: currentColor; font: 600 15px var(--ff-body); text-transform: uppercase; letter-spacing: .12em; }
 .spin-badge__icon { width: 30%; height: 30%; animation: wiggle 3s ease-in-out infinite; }
 
-.sparkle { position: absolute; z-index: 3; color: var(--olive); animation: twinkle 3s ease-in-out infinite; }
-.sparkle--1 { left: 4%; top: 52%; color: var(--mauve); }
-.sparkle--2 { right: 18%; bottom: 6%; animation-delay: -1s; }
-.sparkle--3 { right: 30%; top: 4%; color: var(--sage); animation-delay: -2s; filter: drop-shadow(0 0 1px var(--olive)); }
+.sparkle { position: absolute; z-index: 4; color: var(--olive); animation: twinkle 3s ease-in-out infinite; }
+.sparkle--1 { left: 0; top: 44%; color: var(--mauve); }
+.sparkle--2 { right: 14%; bottom: 0; animation-delay: -1s; }
+.sparkle--3 { left: 2%; top: 4%; color: var(--mauve); animation-delay: -2s; }
 
 @media (min-width: 960px) {
   .hero__inner { grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); }
@@ -947,6 +961,7 @@ body.at-footer .wa-bubble { transform: scale(0) rotate(-90deg); pointer-events: 
   }
   .js [data-reveal] { opacity: 1; transform: none; }
   .hero__title .w > span { transform: none; }
+  .hero__card { rotate: var(--r); }
   .scribble path { stroke-dashoffset: 0; }
   .ribbon__track, .polaroids__track { animation: none; }
 }
