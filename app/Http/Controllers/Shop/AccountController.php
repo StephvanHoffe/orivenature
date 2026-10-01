@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Services\Loyalty;
 use App\Support\Countries;
@@ -12,26 +13,34 @@ use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
 {
-    private function customer()
+    private function customer(): Customer
     {
         return Auth::guard('customer')->user();
     }
 
     public function dashboard()
     {
-        $customer = $this->customer()->load(['addresses']);
-        $orders = $customer->orders()->with('items')->paginate(10);
-        $loyalty = $customer->loyaltyTransactions()->take(10)->get();
-        $credit = $customer->creditTransactions()->take(10)->get();
+        $customer = $this->customer()->load('addresses');
+        $orders = $customer->orders()->with(['items', 'fulfillments', 'payments', 'refunds', 'shippingRate'])->latest('placed_at')->take(4)->get();
+        // De bestelling die nu het meest relevant is: nog onderweg of net verzonden
+        $current = $orders->first(fn ($o) => $o->isInProgress())
+            ?? $orders->first(fn ($o) => $o->fulfilled_at && $o->fulfilled_at->gt(now()->subDays(7)));
+        $stats = [
+            'orders' => $customer->orders()->whereNotNull('paid_at')->count(),
+            'spent' => (int) $customer->orders()->whereNotNull('paid_at')->sum('total'),
+        ];
 
-        return view('shop.account.dashboard', compact('customer', 'orders', 'loyalty', 'credit'));
+        return view('shop.account.dashboard', compact('customer', 'orders', 'current', 'stats'));
     }
 
-    public function order(string $number)
+    public function rewards()
     {
-        $order = $this->customer()->orders()->where('number', $number)->with(['items', 'fulfillments'])->firstOrFail();
+        abort_unless(Loyalty::enabled() || $this->customer()->credit_balance > 0, 404);
+        $customer = $this->customer();
+        $points = $customer->loyaltyTransactions()->paginate(15, ['*'], 'punten');
+        $credit = $customer->creditTransactions()->paginate(15, ['*'], 'tegoed');
 
-        return view('shop.order-status', ['order' => $order, 'justPlaced' => false, 'inAccount' => true]);
+        return view('shop.account.rewards', compact('customer', 'points', 'credit'));
     }
 
     public function redeem(Request $request)
@@ -60,17 +69,17 @@ class AccountController extends Controller
             'country_code' => ['required', Rule::in(array_keys(Countries::LIST))],
             'phone' => ['nullable', 'string', 'max:40'],
             'is_default' => ['nullable', 'boolean'],
-        ]);
+        ], [], ['first_name' => 'voornaam', 'last_name' => 'achternaam', 'address1' => 'adres', 'zip' => 'postcode', 'city' => 'plaats', 'country_code' => 'land']);
     }
 
     public function storeAddress(Request $request)
     {
         $data = $this->validateAddress($request);
         $customer = $this->customer();
-        $address = $customer->addresses()->create($data + ['is_default' => false]);
+        $address = $customer->addresses()->create(collect($data)->except('is_default')->all() + ['is_default' => false]);
         $this->setDefault($address, ($data['is_default'] ?? false) || $customer->addresses()->count() === 1);
 
-        return back()->with('status', __('Adres opgeslagen.'));
+        return redirect()->route('account.addresses')->with('status', __('Adres opgeslagen.'));
     }
 
     public function updateAddress(Request $request, CustomerAddress $address)
@@ -80,15 +89,27 @@ class AccountController extends Controller
         $address->update(collect($data)->except('is_default')->all());
         $this->setDefault($address, (bool) ($data['is_default'] ?? false));
 
-        return back()->with('status', __('Adres bijgewerkt.'));
+        return redirect()->route('account.addresses')->with('status', __('Adres bijgewerkt.'));
+    }
+
+    public function defaultAddress(CustomerAddress $address)
+    {
+        abort_unless($address->customer_id === $this->customer()->id, 404);
+        $this->setDefault($address, true);
+
+        return redirect()->route('account.addresses')->with('status', __('Standaardadres gewijzigd.'));
     }
 
     public function deleteAddress(CustomerAddress $address)
     {
         abort_unless($address->customer_id === $this->customer()->id, 404);
+        $wasDefault = $address->is_default;
         $address->delete();
+        if ($wasDefault && ($next = $this->customer()->addresses()->first())) {
+            $this->setDefault($next, true);
+        }
 
-        return back()->with('status', __('Adres verwijderd.'));
+        return redirect()->route('account.addresses')->with('status', __('Adres verwijderd.'));
     }
 
     private function setDefault(CustomerAddress $address, bool $default): void

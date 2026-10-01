@@ -59,7 +59,7 @@ class MollieGateway implements PaymentGateway
             'provider_id' => $mollie->id,
             'amount' => $order->total,
             'status' => self::status($mollie->status),
-            'data' => ['mode' => $mollie->mode ?? null],
+            'data' => ['mode' => $mollie->mode ?? null, 'checkout_url' => $mollie->getCheckoutUrl()],
         ]);
 
         return $mollie->getCheckoutUrl();

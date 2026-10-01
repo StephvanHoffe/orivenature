@@ -264,7 +264,7 @@ class CheckoutController extends Controller
 
     public function status(string $token)
     {
-        $order = Order::where('token', $token)->with(['items', 'fulfillments', 'customer'])->firstOrFail();
+        $order = Order::where('token', $token)->with(['items', 'fulfillments', 'customer', 'payments', 'refunds', 'shippingRate'])->firstOrFail();
         $justPlaced = session('last_order') === $order->token;
 
         return view('shop.order-status', compact('order', 'justPlaced'));

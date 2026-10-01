@@ -6,6 +6,7 @@ use App\Support\Countries;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class Order extends Model
@@ -95,6 +96,91 @@ class Order extends Model
     public function giftCard(): BelongsTo
     {
         return $this->belongsTo(GiftCard::class);
+    }
+
+    public function shippingRate(): BelongsTo
+    {
+        return $this->belongsTo(ShippingRate::class);
+    }
+
+    /** Status zoals de klant hem ziet: [tekst, toon] met toon wait, busy, done of off. */
+    public function customerStatus(): array
+    {
+        return match (true) {
+            $this->status === 'cancelled' => [__('Geannuleerd'), 'off'],
+            $this->financial_status === 'refunded' => [__('Terugbetaald'), 'off'],
+            ! $this->paid_at => [__('Wacht op betaling'), 'wait'],
+            $this->fulfillment_status === 'fulfilled' => [__('Verzonden'), 'done'],
+            $this->fulfillment_status === 'partially_fulfilled' => [__('Deels verzonden'), 'busy'],
+            default => [__('Wordt ingepakt'), 'busy'],
+        };
+    }
+
+    /** Nog niet afgerond: wacht op betaling of verzending. */
+    public function isInProgress(): bool
+    {
+        return $this->status !== 'cancelled' && $this->financial_status !== 'refunded' && $this->fulfillment_status !== 'fulfilled';
+    }
+
+    /**
+     * Stappen voor de statusweergave.
+     *
+     * @return array<int, array{label: string, date: ?Carbon, state: string, text: ?string}>
+     */
+    public function timeline(): array
+    {
+        $shippedAt = $this->fulfillments->min('shipped_at');
+        $steps = [['label' => __('Besteld'), 'date' => $this->placed_at, 'state' => 'done', 'text' => null]];
+        if ($this->status === 'cancelled' && ! $this->paid_at) {
+            $steps[] = ['label' => __('Geannuleerd'), 'date' => $this->cancelled_at, 'state' => 'off',
+                'text' => $this->cancel_reason === 'payment' ? __('De betaling is niet gelukt of afgebroken.') : $this->cancel_reason];
+
+            return $steps;
+        }
+        $steps[] = ['label' => __('Betaald'), 'date' => $this->paid_at, 'state' => $this->paid_at ? 'done' : 'current',
+            'text' => $this->paid_at ? $this->paymentMethodLabel() : __('We wachten nog op je betaling.')];
+        $steps[] = ['label' => __('Ingepakt'), 'date' => $shippedAt, 'state' => $shippedAt ? 'done' : ($this->paid_at ? 'current' : 'todo'),
+            'text' => ! $shippedAt && $this->paid_at ? __('We maken je pakket klaar.') : null];
+        $steps[] = ['label' => $this->fulfillment_status === 'partially_fulfilled' ? __('Deels verzonden') : __('Verzonden'), 'date' => $shippedAt,
+            'state' => $shippedAt ? 'done' : 'todo',
+            'text' => $shippedAt ? __('Je pakket is onderweg.') : null];
+        if ($this->status === 'cancelled') {
+            $steps[] = ['label' => __('Geannuleerd'), 'date' => $this->cancelled_at, 'state' => 'off', 'text' => $this->cancel_reason];
+        } elseif ($this->refunded_total > 0) {
+            $steps[] = ['label' => $this->financial_status === 'refunded' ? __('Terugbetaald') : __('Deels terugbetaald'), 'date' => $this->refunds->max('created_at'),
+                'state' => 'done', 'text' => money($this->refunded_total)];
+        }
+
+        return $steps;
+    }
+
+    public function paymentMethodLabel(): ?string
+    {
+        $method = $this->payments->firstWhere('status', 'paid')?->method;
+        if ($method) {
+            return __('Betaald met :method', ['method' => self::PAYMENT_METHODS[$method] ?? ucfirst($method)]);
+        }
+        if ($this->total === 0 && ($this->credit_used || $this->gift_card_used)) {
+            return __('Betaald met tegoed of cadeaubon');
+        }
+
+        return null;
+    }
+
+    public const PAYMENT_METHODS = [
+        'ideal' => 'iDEAL | Wero', 'creditcard' => 'creditcard', 'klarna' => 'Klarna', 'klarnapaylater' => 'Klarna', 'klarnasliceit' => 'Klarna',
+        'paypal' => 'PayPal', 'applepay' => 'Apple Pay', 'bancontact' => 'Bancontact', 'banktransfer' => 'bankoverschrijving', 'test' => 'testbetaling',
+    ];
+
+    /** Link om een openstaande betaling af te ronden (zolang de betaling nog open staat). */
+    public function checkoutUrl(): ?string
+    {
+        if ($this->paid_at || $this->status === 'cancelled') {
+            return null;
+        }
+        $payment = $this->payments->firstWhere('status', 'open');
+
+        return $payment?->data['checkout_url'] ?? null;
     }
 
     public function getNameAttribute(): string

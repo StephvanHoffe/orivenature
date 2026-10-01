@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Shop\AccountController;
+use App\Http\Controllers\Shop\AccountOrderController;
+use App\Http\Controllers\Shop\AccountProfileController;
 use App\Http\Controllers\Shop\AuthController;
 use App\Http\Controllers\Shop\BlogController;
 use App\Http\Controllers\Shop\CartController;
@@ -58,8 +60,14 @@ Route::middleware(TrackVisit::class)->group(function () {
         });
         Route::middleware('auth:customer')->group(function () {
             Route::get('/', [AccountController::class, 'dashboard'])->name('dashboard');
-            Route::get('/orders/{number}', [AccountController::class, 'order'])->name('order');
+            Route::get('/orders', [AccountOrderController::class, 'index'])->name('orders');
+            Route::get('/orders/{number}', [AccountOrderController::class, 'show'])->name('orders.show');
+            Route::get('/orders/{number}/factuur', [AccountOrderController::class, 'invoice'])->name('orders.invoice');
+            Route::get('/orders/{number}/betalen', [AccountOrderController::class, 'pay'])->name('orders.pay');
+            Route::get('/spaarpunten', [AccountController::class, 'rewards'])->name('rewards');
             Route::get('/addresses', [AccountController::class, 'addresses'])->name('addresses');
+            Route::get('/gegevens', [AccountProfileController::class, 'edit'])->name('profile');
+            Route::get('/gegevens/download', [AccountProfileController::class, 'export'])->name('profile.export');
         });
     });
 });
@@ -91,7 +99,15 @@ Route::prefix('account')->name('account.')->group(function () {
         Route::post('/loyalty/redeem', [AccountController::class, 'redeem'])->name('redeem');
         Route::post('/addresses', [AccountController::class, 'storeAddress'])->name('addresses.store');
         Route::put('/addresses/{address}', [AccountController::class, 'updateAddress'])->name('addresses.update');
+        Route::post('/addresses/{address}/standaard', [AccountController::class, 'defaultAddress'])->name('addresses.default');
         Route::delete('/addresses/{address}', [AccountController::class, 'deleteAddress'])->name('addresses.delete');
+        Route::post('/orders/{number}/opnieuw', [AccountOrderController::class, 'reorder'])->name('orders.reorder');
+        Route::post('/orders/{number}/vraag', [AccountOrderController::class, 'question'])->middleware('throttle:6,1')->name('orders.question');
+        Route::put('/gegevens', [AccountProfileController::class, 'updateDetails'])->name('profile.details');
+        Route::put('/gegevens/e-mail', [AccountProfileController::class, 'updateEmail'])->middleware('throttle:6,1')->name('profile.email');
+        Route::put('/gegevens/wachtwoord', [AccountProfileController::class, 'updatePassword'])->middleware('throttle:6,1')->name('profile.password');
+        Route::put('/gegevens/nieuwsbrief', [AccountProfileController::class, 'updateMarketing'])->name('profile.marketing');
+        Route::delete('/gegevens', [AccountProfileController::class, 'destroy'])->middleware('throttle:6,1')->name('profile.destroy');
     });
 });
 

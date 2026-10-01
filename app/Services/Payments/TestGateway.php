@@ -15,14 +15,17 @@ class TestGateway implements PaymentGateway
 {
     public function createPayment(Order $order): string
     {
-        $payment = $order->payments()->create([
+        $id = 'test_'.Str::random(10);
+        $url = route('payments.test', ['payment' => $id]);
+        $order->payments()->create([
             'provider' => 'test',
-            'provider_id' => 'test_'.Str::random(10),
+            'provider_id' => $id,
             'amount' => $order->total,
             'status' => 'open',
+            'data' => ['checkout_url' => $url],
         ]);
 
-        return route('payments.test', ['payment' => $payment->provider_id]);
+        return $url;
     }
 
     public function complete(Payment $payment, string $status): Payment

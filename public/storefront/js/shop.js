@@ -298,6 +298,12 @@
     card.addEventListener('animationend', () => card.classList.remove('is-flash'), { once: true });
   });
 
+  // Bevestiging voor formulieren met data-confirm (bijv. adres verwijderen)
+  document.addEventListener('submit', (e) => {
+    const message = e.target.dataset && e.target.dataset.confirm;
+    if (message && !window.confirm(message)) e.preventDefault();
+  });
+
   /* ------------------------------------------------------------------
      Snel bekijken
      ------------------------------------------------------------------ */

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Messages;
 
 use App\Filament\Resources\Messages\Pages\ListMessages;
+use App\Filament\Resources\Orders\OrderResource;
 use App\Models\ContactMessage;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -52,7 +53,7 @@ class MessageResource extends Resource
             TextEntry::make('email')->label('E-mail')->copyable(),
             TextEntry::make('phone')->label('Telefoon')->placeholder('–'),
             TextEntry::make('company')->label('Bedrijf')->placeholder('–'),
-            TextEntry::make('data')->label('Extra')->state(fn (ContactMessage $record) => collect($record->data ?? [])->map(fn ($v, $k) => ucfirst($k).': '.$v)->implode(' · ') ?: '–')->columnSpanFull(),
+            TextEntry::make('data')->label('Extra')->state(fn (ContactMessage $record) => collect($record->extraFields())->map(fn ($v, $k) => ucfirst($k).': '.$v)->implode(' · ') ?: '–')->columnSpanFull(),
             TextEntry::make('message')->label('Bericht')->formatStateUsing(fn ($state) => nl2br(e($state)))->html()->placeholder('–')->columnSpanFull(),
         ])->columns(2);
     }
@@ -65,7 +66,8 @@ class MessageResource extends Resource
                 TextColumn::make('created_at')->label('Ontvangen')->since()->sortable(),
                 TextColumn::make('type')->label('Soort')->badge()->formatStateUsing(fn ($state) => ContactMessage::TYPES[$state] ?? $state),
                 TextColumn::make('name')->label('Van')->description(fn (ContactMessage $record) => $record->email)->searchable(['name', 'email', 'company']),
-                TextColumn::make('message')->label('Bericht')->limit(80)->wrap(),
+                TextColumn::make('message')->label('Bericht')->limit(80)->wrap()
+                    ->description(fn (ContactMessage $record) => ! empty($record->data['bestelling']) ? $record->data['bestelling'].' · '.($record->data['onderwerp'] ?? '') : null, 'above'),
                 TextColumn::make('handled_at')->label('Status')->badge()->state(fn (ContactMessage $record) => $record->handled_at ? 'Afgehandeld' : 'Nieuw')
                     ->color(fn ($state) => $state === 'Nieuw' ? 'warning' : 'success'),
             ])
@@ -77,6 +79,9 @@ class MessageResource extends Resource
                 ViewAction::make()->label('Lezen')->modalFooterActions(fn (ContactMessage $record) => [
                     Action::make('reply')->label('Beantwoorden')->icon(Heroicon::OutlinedEnvelope)->url('mailto:'.$record->email.'?subject='.rawurlencode('Re: je bericht aan '.settings('store.name'))),
                 ]),
+                Action::make('order')->label('Bestelling')->icon(Heroicon::OutlinedShoppingBag)->color('gray')
+                    ->visible(fn (ContactMessage $record) => ! empty($record->data['order_id']))
+                    ->url(fn (ContactMessage $record) => OrderResource::getUrl('view', ['record' => $record->data['order_id']])),
                 Action::make('handled')->label(fn (ContactMessage $record) => $record->handled_at ? 'Heropenen' : 'Afgehandeld')->icon(Heroicon::OutlinedCheck)->color('gray')
                     ->action(fn (ContactMessage $record) => $record->update(['handled_at' => $record->handled_at ? null : now()])),
             ])

@@ -11,7 +11,6 @@
   <div class="section order-page">
     <div class="container container--narrow">
       <header class="order-page__head" data-reveal>
-        @if($inAccount ?? false)<a class="article-page__back" href="{{ route('account.dashboard') }}"><svg width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg> {{ __('Terug naar mijn account') }}</a>@endif
         <p class="eyebrow">{{ __('Bestelling :number', ['number' => $order->name]) }} · {{ $order->placed_at?->translatedFormat('j F Y') }}</p>
         @if($order->status === 'cancelled')
           <h1 class="h2 h2--xl">{{ __('Deze bestelling is geannuleerd') }}</h1>
@@ -25,22 +24,9 @@
         @endif
       </header>
 
-      <ol class="order-steps" aria-label="{{ __('Status') }}">
-        <li class="is-done">{{ __('Besteld') }}</li>
-        <li class="{{ $order->paid_at ? 'is-done' : '' }}">{{ __('Betaald') }}</li>
-        <li class="{{ $order->fulfillment_status !== 'unfulfilled' ? 'is-done' : '' }}">{{ __('Verzonden') }}</li>
-      </ol>
-
-      @foreach($order->fulfillments as $fulfillment)
-        <div class="order-track">
-          <svg width="22" height="22" aria-hidden="true"><use href="#i-truck"/></svg>
-          <div>
-            <strong>{{ __('Onderweg sinds :date', ['date' => $fulfillment->shipped_at?->translatedFormat('j F')]) }}</strong>
-            @if($fulfillment->tracking_number)<br>{{ $fulfillment->tracking_company }} · {{ $fulfillment->tracking_number }}@endif
-          </div>
-          @if($link = $fulfillment->trackingLink())<a class="btn btn--primary" href="{{ $link }}" target="_blank" rel="noopener">{{ __('Volg je pakket') }}</a>@endif
-        </div>
-      @endforeach
+      <div class="order-card order-card--timeline">
+        @include('shop.partials.order-timeline')
+      </div>
 
       @if($order->paid_at && $order->points_earned > 0)
         <p class="loyalty-earn"><svg width="18" height="18" aria-hidden="true"><use href="#i-coin"/></svg>
@@ -77,7 +63,12 @@
       </div>
 
       <p class="order-page__help">{{ __('Vragen over je bestelling?') }} <a class="text-link" href="mailto:{{ settings('store.email') }}">{{ settings('store.email') }}</a>@if($wa = \App\Support\Storefront::whatsappUrl()) · <a class="text-link" href="{{ $wa }}" target="_blank" rel="noopener">Whatsapp</a>@endif</p>
-      <a class="btn btn--ghost" href="{{ route('home') }}">{{ __('Verder winkelen') }}</a>
+      <div class="order-page__links">
+        @if($order->customer_id && auth('customer')->id() === $order->customer_id)
+          <a class="btn btn--primary" href="{{ route('account.orders.show', $order->number) }}">{{ __('Bekijk in mijn account') }}</a>
+        @endif
+        <a class="btn btn--ghost" href="{{ route('home') }}">{{ __('Verder winkelen') }}</a>
+      </div>
     </div>
   </div>
 @endsection
