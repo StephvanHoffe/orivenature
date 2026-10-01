@@ -414,9 +414,9 @@
     const product = CATALOG[qvState.key];
     const v = product.variants[qvState.size];
     return [
-      { src: img(v.front, 900), pack: true },
-      ...product.lifestyle.map((f) => ({ src: img(f, 900), pack: false })),
-      { src: img(v.back, 900), pack: true },
+      { file: v.front, pack: true },
+      ...product.lifestyle.map((f) => ({ file: f, pack: false })),
+      { file: v.back, pack: true },
     ];
   }
 
@@ -431,11 +431,11 @@
     qvRoot.innerHTML = `
       <div class="qv__gallery">
         <div class="qv__main" style="--tone:${product.tone}">
-          <img class="${current.pack ? 'is-pack' : ''}" src="${current.src}" alt="${variantTitle({ product, size: qvState.size })}">
+          <img class="${current.pack ? 'is-pack' : ''}" src="${img(current.file, 900)}" alt="${variantTitle({ product, size: qvState.size })}">
           ${v.bestseller ? '<div class="pcard__badges"><span class="badge">Best seller</span><span class="badge">Gekeurd in Europa</span></div>' : (hasSizes ? '<div class="pcard__badges"><span class="badge">Gekeurd in Europa</span></div>' : '')}
         </div>
         <div class="qv__thumbs" role="group" aria-label="Afbeeldingen">
-          ${images.map((im, i) => `<button class="qv__thumb${im.pack ? ' is-pack' : ''}" style="--tone:${product.tone}" type="button" data-qv-image="${i}" aria-label="Afbeelding ${i + 1}" aria-current="${i === qvState.image}"><img src="${im.src.replace('width=900', 'width=160')}" alt=""></button>`).join('')}
+          ${images.map((im, i) => `<button class="qv__thumb${im.pack ? ' is-pack' : ''}" style="--tone:${product.tone}" type="button" data-qv-image="${i}" aria-label="Afbeelding ${i + 1}" aria-current="${i === qvState.image}"><img src="${img(im.file, 160)}" alt=""></button>`).join('')}
         </div>
       </div>
       <div class="qv__info">
