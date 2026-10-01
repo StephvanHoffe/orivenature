@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Menu extends Model
+{
+    protected $guarded = ['id'];
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(MenuItem::class)->whereNull('parent_id')->orderBy('position');
+    }
+
+    public function allItems(): HasMany
+    {
+        return $this->hasMany(MenuItem::class)->orderBy('position');
+    }
+
+    public static function byHandle(string $handle): ?self
+    {
+        return once(fn () => static::with('items.children')->where('handle', $handle)->first());
+    }
+}

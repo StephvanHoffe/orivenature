@@ -1,0 +1,53 @@
+/* Extra opmaak voor de beheeromgeving (Filament levert zelf alleen zijn eigen klassen mee) */
+.ob-muted { color: rgb(120 113 108); font-size: .85em; }
+.ob-chips { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .2rem; }
+.ob-chip { display: inline-block; padding: .05rem .5rem; border-radius: 999px; background: #efeee8; font-size: .75rem; font-weight: 600; color: #52572e; vertical-align: middle; }
+.ob-chip--ok { background: #e3ecd3; color: #3d5a1f; }
+.ob-chip--warn { background: #fbecd0; color: #8a5a10; }
+
+.ob-lines { display: grid; gap: .25rem; }
+.ob-line { display: grid; grid-template-columns: 52px 1fr auto auto; gap: 1rem; align-items: center; padding: .6rem 0; border-bottom: 1px solid #f0efe9; }
+.ob-line__img { width: 52px; height: 52px; border-radius: 10px; background: #f4f2ea; overflow: hidden; display: grid; place-items: center; }
+.ob-line__img img { width: 100%; height: 100%; object-fit: contain; }
+.ob-line__info { display: grid; gap: .1rem; font-size: .9rem; }
+.ob-line__qty { color: rgb(120 113 108); font-size: .85rem; white-space: nowrap; }
+.ob-line__total { font-weight: 600; white-space: nowrap; }
+.ob-ship { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding: .7rem .9rem; margin-top: .5rem; border-radius: 10px; background: #f3f6ec; font-size: .875rem; }
+.ob-ship a { color: #52572e; font-weight: 600; text-decoration: underline; }
+
+.ob-sum { display: grid; gap: .45rem; font-size: .9rem; }
+.ob-sum > div { display: flex; justify-content: space-between; gap: 1rem; }
+.ob-sum dt { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.ob-sum dd { white-space: nowrap; }
+.ob-sum__total { padding-top: .5rem; border-top: 1px solid #ecebe4; font-weight: 700; font-size: 1rem; }
+
+.ob-timeline { display: grid; gap: .8rem; margin: 0; padding: 0 0 0 1rem; border-left: 2px solid #e6e4da; list-style: none; font-size: .875rem; }
+.ob-timeline li { position: relative; display: grid; gap: .1rem; }
+.ob-timeline li::before { content: ""; position: absolute; left: calc(-1rem - 6px); top: .35rem; width: 10px; height: 10px; border-radius: 50%; background: #52572e; }
+.ob-timeline time { font-size: .75rem; color: rgb(120 113 108); }
+
+.ob-customer { display: grid; gap: .3rem; font-size: .9rem; }
+.ob-customer a { color: #52572e; }
+
+.ob-help { font-size: .875rem; line-height: 1.6; color: rgb(87 83 78); }
+.ob-help code { padding: .1rem .35rem; border-radius: 6px; background: #f4f2ea; font-size: .8rem; word-break: break-all; }
+.ob-help ol, .ob-help ul { padding-left: 1.2rem; list-style: decimal; display: grid; gap: .35rem; }
+.ob-help ul { list-style: disc; }
+.ob-help a { color: #52572e; text-decoration: underline; }
+
+.ob-funnel { display: grid; gap: .6rem; }
+.ob-funnel__row { display: grid; grid-template-columns: 1fr auto; gap: .3rem .75rem; align-items: center; font-size: .875rem; }
+.ob-funnel__row .ob-funnel__bar { grid-column: 1 / -1; grid-row: 2; }
+.ob-funnel__bar { height: 12px; border-radius: 999px; background: #efeee8; overflow: hidden; }
+.ob-funnel__bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #52572e, #a7b57c); }
+.ob-funnel__row strong { text-align: right; }
+
+.ob-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+.ob-table th { text-align: left; font-weight: 600; color: rgb(120 113 108); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; padding: .4rem .5rem; border-bottom: 1px solid #ecebe4; }
+.ob-table td { padding: .55rem .5rem; border-bottom: 1px solid #f3f2ec; }
+.ob-table td.num, .ob-table th.num { text-align: right; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .ob-line { grid-template-columns: 44px 1fr auto; }
+  .ob-line__qty { display: none; }
+}
